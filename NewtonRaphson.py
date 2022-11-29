@@ -17,7 +17,7 @@ C = [degree]
 #x and y coordinates of our data points
 months = 10
 X=[float(i) for i in range(months*4)]
-#bond yield between 1% and 9.99%
+#assume bond yield between 4% and 5%
 Y=[rand(400.0, 500.0)/100.0 for i in range(months*4)]
 
 #function to calculate f(x) for a given x 
