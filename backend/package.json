@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "chart.js": "^4.2.1"
+    "chart.js": "^4.2.1",
+    "scipy": "^0.1.4"
   }
 }

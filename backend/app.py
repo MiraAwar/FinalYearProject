@@ -1,7 +1,11 @@
 import io
 import csv
+import pickle
 import matplotlib.pyplot as plt
 from flask import Flask, request, send_file
+import NN_preprocessing_methods
+import MonteCarlo_methods
+import NSSRFR_methods
 
 app = Flask(__name__)
 
@@ -32,5 +36,38 @@ def process_csv():
 
     return send_file(plot_file, mimetype="image/png")
 
+
+@app.route("/neural_network_default", methods=["GET"])
+def neural_network_default():
+    model_input = NN_preprocessing_methods.preprocess_csv("data/daily-treasury-rates-2014-2023.csv")
+    pickled_model = pickle.load(open('model.pkl', 'rb'))
+    prediction_array = pickled_model.predict(model_input)
+    scaled_output = NN_preprocessing_methods.scale_input(prediction_array)
+    return scaled_output
+
+@app.route("/neural_network/<string:csv_file>", methods=["GET"])
+def neural_network(csv_file):
+    model_input = NN_preprocessing_methods.preprocess_csv(csv_file)
+    pickled_model = pickle.load(open('model.pkl', 'rb'))
+    prediction_array = pickled_model.predict(model_input)
+    scaled_output = NN_preprocessing_methods.scale_input(prediction_array)
+    return scaled_output
+
+@app.route("/monte_carlo/<string:csv_file>", methods=["GET"])
+def monte_carlo(csv_file):
+    MonteCarlo_methods.monte_carlo_yield_estimation(csv_file).to_excel("output.xlsx")
+
+@app.route("/monte_carlo_default", methods=["GET"])
+def monte_carlo_default():
+    return MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2014-2023.csv").to_excel("output.xlsx")
+
+@app.route("/nss_calibrate/<int:year>/<int:maturity_bound>", methods=["GET"])
+def nss_calibrate(year, maturity_bound):
+    return str(NSSRFR_methods.Calibrate(year, maturity_bound))
+
+@app.route("/nss_predict/<int:prediction_year>/<int:prediction_maturity>/<int:years_available>", methods=["GET"])
+def nss_predict(prediction_year, prediction_maturity, years_available):
+    return str(NSSRFR_methods.Predict(prediction_year, prediction_maturity, years_available))
+    
 if __name__ == "__main__":
     app.run(debug=True)
