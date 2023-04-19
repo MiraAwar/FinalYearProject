@@ -1,6 +1,7 @@
 import io
 import csv
 import pickle
+from keras.models import load_model 
 import matplotlib.pyplot as plt
 from flask import Flask, request, send_file
 import NN_preprocessing_methods
@@ -39,27 +40,27 @@ def process_csv():
 
 @app.route("/neural_network_default", methods=["GET"])
 def neural_network_default():
-    model_input = NN_preprocessing_methods.preprocess_csv("data/daily-treasury-rates-2014-2023.csv")
-    pickled_model = pickle.load(open('model.pkl', 'rb'))
-    prediction_array = pickled_model.predict(model_input)
-    scaled_output = NN_preprocessing_methods.scale_input(prediction_array)
-    return scaled_output
+    loaded_model = load_model('model.h5')
+    (model_input, scaler) = NN_preprocessing_methods.preprocess_csv("data/daily-treasury-rates-2014-2023.csv")
+    prediction_array = loaded_model.predict(model_input)
+    scaled_output = NN_preprocessing_methods.scale_input(prediction_array, scaler)
+    return str(scaled_output)
 
 @app.route("/neural_network/<string:csv_file>", methods=["GET"])
 def neural_network(csv_file):
-    model_input = NN_preprocessing_methods.preprocess_csv(csv_file)
-    pickled_model = pickle.load(open('model.pkl', 'rb'))
-    prediction_array = pickled_model.predict(model_input)
-    scaled_output = NN_preprocessing_methods.scale_input(prediction_array)
+    loaded_model = load_model('model.h5')
+    (model_input, scaler) = NN_preprocessing_methods.preprocess_csv("data/" + csv_file)
+    prediction_array = loaded_model.predict(model_input)
+    scaled_output = NN_preprocessing_methods.scale_input(prediction_array, scaler)
     return scaled_output
 
 @app.route("/monte_carlo/<string:csv_file>", methods=["GET"])
 def monte_carlo(csv_file):
-    MonteCarlo_methods.monte_carlo_yield_estimation(csv_file).to_excel("output.xlsx")
+    return MonteCarlo_methods.monte_carlo_yield_estimation(csv_file).to_excel("output.xlsx")
 
 @app.route("/monte_carlo_default", methods=["GET"])
 def monte_carlo_default():
-    return MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2014-2023.csv").to_excel("output.xlsx")
+    return print(MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2014-2023.csv"))#.to_excel("output.xlsx")
 
 @app.route("/nss_calibrate/<int:year>/<int:maturity_bound>", methods=["GET"])
 def nss_calibrate(year, maturity_bound):

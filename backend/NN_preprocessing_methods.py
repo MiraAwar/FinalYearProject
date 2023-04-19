@@ -13,8 +13,9 @@ def preprocess_csv(csv_file_name):
     data.drop('30 Yr', axis=1, inplace=True)
 
     scaler = MinMaxScaler()
-    return scaler.fit_transform(data.iloc[:, :-1])
+    model_input = scaler.fit_transform(data.iloc[:, :-1])
+    scaler.fit_transform(data.iloc[:, -1:])
+    return (model_input, scaler)
     
-def scale_input(nd_array):
-    scaler = MinMaxScaler()
+def scale_input(nd_array, scaler):
     return scaler.inverse_transform(nd_array)
