@@ -1,0 +1,6 @@
+button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    /* add any other styles you want to apply to the disabled button here */
+  }
+  
