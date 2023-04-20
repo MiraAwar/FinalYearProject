@@ -8,7 +8,7 @@ import Graph from './components/Graph';
 
 function App() {
   const [sharedState, setSharedState] = useState(false);
-
+  const myArray = [1,2,3,4,5,6,7];
   return (
     <div>
       <div className="App" hidden={sharedState}>
@@ -31,7 +31,7 @@ function App() {
         </header>
         <br></br>
         <br></br>
-        <Graph />
+        <Graph data ={myArray}/>
         <br></br>
         <button className="back" onClick={() => setSharedState(false)}>
         Upload Another File

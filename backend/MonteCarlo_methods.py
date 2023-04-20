@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 def monte_carlo_yield_estimation(csv_file):
     # Load data
@@ -43,3 +45,17 @@ def monte_carlo_yield_estimation(csv_file):
 
 # Call the function using the input csv file, and save the output to another csv file
 # monte_carlo_yield_estimation('daily-treasury-rates-3.csv').to_excel("output.xlsx")
+
+
+
+# Plotting to be fixed (currently it's plotting the first yields in the different maturities instead of for a single maturity)
+# Plot the simulated yields against the actual yields
+# print(df.index)
+# print('index: ', df.index)
+# print(df.index)
+# print(df['3 Mo'])
+# plt.plot(df.index, df['3 Mo'], label='Actual Yield')
+# print(simulated_yields.mean())
+# plt.plot(simulated_yields.index, simulated_yields.mean(), label='Simulated Yield')
+# plt.legend()
+# plt.show()

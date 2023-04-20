@@ -2,12 +2,15 @@ import io
 import csv
 import pickle
 import matplotlib.pyplot as plt
-from flask import Flask, request, send_file
+from flask import Flask, jsonify, request, send_file
 import NN_preprocessing_methods
 import MonteCarlo_methods
 import NSSRFR_methods
+from flask_cors import CORS
+import numpy as np
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/")
 def hello_world():
@@ -59,11 +62,14 @@ def monte_carlo(csv_file):
 
 @app.route("/monte_carlo_default", methods=["GET"])
 def monte_carlo_default():
-    return MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2014-2023.csv").to_excel("output.xlsx")
+    return MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2022.csv").to_excel("output.xlsx")
 
 @app.route("/nss_calibrate/<int:year>/<int:maturity_bound>", methods=["GET"])
 def nss_calibrate(year, maturity_bound):
-    return str(NSSRFR_methods.Calibrate(year, maturity_bound))
+    result = NSSRFR_methods.Calibrate(year, maturity_bound)
+    popt_list = np.array(result[0]).tolist()
+    pcov_list = np.array(result[1]).tolist()
+    return jsonify({'popt': popt_list, 'pcov': pcov_list})
 
 @app.route("/nss_predict/<int:prediction_year>/<int:prediction_maturity>/<int:years_available>", methods=["GET"])
 def nss_predict(prediction_year, prediction_maturity, years_available):
