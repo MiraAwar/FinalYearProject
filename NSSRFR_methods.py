@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from sklearn.ensemble import RandomForestRegressor
+from datetime import date
 
 def parse_maturity(maturities):
     for i in range(len(maturities)):
@@ -30,9 +31,11 @@ def NSS_curve(t, beta):
 def NSS_residuals(beta, t, y):
     return np.sum((NSS_curve(t, beta) - y)**2)
 
-def Calibrate(year, maturity_bound):
+def Calibrate(maturity_bound, data_year = 2021, csv = None):
+    if(csv == None):
+        csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'
+    data = pd.read_csv(csv, header=0, index_col=0)
     new_maturities = np.arange(1, maturity_bound)
-    data = pd.read_csv('data/daily-treasury-rates-'+str(year)+'.csv', header=0, index_col=0)
     maturities = data.columns.values
     num_maturities = len(maturities)
     parse_maturity(maturities)
@@ -73,9 +76,11 @@ def Calibrate(year, maturity_bound):
         curve.append(NSS_curve(maturity, final_pred))
     return (new_maturities, curve)
 
-def Predict(prediction_year, prediction_maturity, years_available):
-    year = max(n for n in years_available if n <= prediction_year)
-    data = pd.read_csv('data/daily-treasury-rates-'+str(year)+'.csv', header=0, index_col=0)
+def Predict(prediction_year, prediction_maturity, years_available, csv = None):
+    if(csv == None):
+        data_year = max(n for n in years_available if n <= prediction_year)
+        csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'
+    data = pd.read_csv(csv, header=0, index_col=0)
     maturities = data.columns.values
     num_maturities = len(maturities)
     parse_maturity(maturities)
@@ -96,7 +101,3 @@ def Predict(prediction_year, prediction_maturity, years_available):
         betas[i] = res.x
         yields_pred.append(NSS_curve(prediction_year, betas[i]))
     return (dates, yields_pred)
-
-
-
-
