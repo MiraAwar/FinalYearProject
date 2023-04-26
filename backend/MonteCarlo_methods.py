@@ -10,7 +10,7 @@ def monte_carlo_yield_estimation(csv_file):
     df.set_index('Date', inplace=True)
 
     # Define parameters
-    num_simulations = 1000
+    num_simulations = 100
     num_days = 600
 
     # Calculate daily returns

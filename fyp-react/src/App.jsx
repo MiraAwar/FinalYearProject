@@ -6,6 +6,7 @@ const App = () => {
 
     const [tab, setTab] = useState(1);
     const [file, setFile] = useState(null)
+    const [filename, setFilename] = useState('')
     const [selectedYear, selectedYearValue] = useState('2014');
     const handleYearSelectChange = (event) => {
         // Update the state with the selected value
@@ -24,16 +25,16 @@ const App = () => {
         fetch("http://localhost:5000//nss_calibrate//"+selectedYear+"//"+selectedMaturity)
             .then(response => {
                 if (response.ok) {
-                    return console.log(response);;  // Parse the response as JSON
+                    return console.log(response);  // Parse the response as JSON
                 } else {
                     throw new Error('Error: ' + response.status);
                 }
             })
           .then(data => {
             // Update the state with the API response
-            setApiResponse(String(data));
+            setApiResponse(data);
             console.log("the API finished and returned");
-            console.log(String(data));
+            console.log(data);
           })
           .catch(error => {
             // Handle any errors here
@@ -46,22 +47,93 @@ const App = () => {
         fetch("http://localhost:5000//neural_network_default")
             .then(response => {
                 if (response.ok) {
-                    return console.log(response);;  // Parse the response as JSON
+                    return response.json();  // Parse the response as JSON
                 } else {
                     throw new Error('Error: ' + response.status);
                 }
             })
           .then(data => {
             // Update the state with the API response
-            setApiResponse(String(data));
+            setApiResponse(data);
             console.log("the API finished and returned");
-            console.log(String(data));
+            console.log(data);
           })
           .catch(error => {
             // Handle any errors here
             console.error(error);
           });
       }
+
+      const handleNNCSVButtonClick = (nn_csv_file_name) => {
+        // Call the API or perform any asynchronous operation here
+        fetch("http://localhost:5000//neural_network//"+nn_csv_file_name)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();  // Parse the response as JSON
+                } else {
+                    throw new Error('Error: ' + response.status);
+                }
+            })
+          .then(data => {
+            // Update the state with the API response
+            setApiResponse(data);
+            console.log("the API finished and returned");
+            console.log(data);
+          })
+          .catch(error => {
+            // Handle any errors here
+            console.error(error);
+          });
+      }
+
+      const handleMonteCarloDefaultButtonClick = () => {
+        fetch("http://localhost:5000/monte_carlo_default")
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Error: ' + response.status);
+            }
+        })
+        .then(data => {
+            const url = window.URL.createObjectURL(new Blob([data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'output.xlsx');
+            document.body.appendChild(link);
+            link.click();
+        })
+        .catch(error => {
+            console.error(error);
+        });
+      }
+
+    function processFile(file) {
+        setFile(file);
+        setFilename(file.name);
+        uploadFile(file)
+    }
+
+    function uploadFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const fileContents = e.target.result;
+            const formData = new FormData();
+            formData.append('file', fileContents);
+            fetch("http://localhost:5000//upload", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response from the backend server here
+            })
+            .catch(error => {
+                // Handle any errors here
+            });
+        };
+        reader.readAsText(file);
+    }
 
     function changeTab(num) {
         setTab(num);
@@ -127,12 +199,6 @@ const App = () => {
                                     <button className="button button-primary" onClick={handleCalibrateButtonClick}>Calibrate</button>
                                     <button className="button button-secondary">Forecast</button>
                                 </div>
-                                <br></br>
-                                <p>Selected value: {selectedYear}</p>
-                                <p>Selected value: {selectedMaturity}</p>
-                                <div>
-                                    <p>The Api response: {apiResponse}</p>
-                                </div>
                             </div>
                         ) : (
                             tab === 2 ? (
@@ -140,12 +206,15 @@ const App = () => {
                                     <h2 className="content__title">Execute a Monte-Carlo Simulation that predicts your CSV file maturities,
                                                 or just use one of our own default bond yield files.</h2>
                                     <div className='content__tab2'>
-                                        <label for="file-upload" class="content__file--upload">
+                                        <label for="monte-carlo-file-upload" class="content__file--upload">
                                             {file ? file.name : 'Upload File'}
                                         </label>
+                                        <input name="file" id="monte-carlo-file-upload" accept="text/csv" type="file" onChange={
+                                        (e) => processFile(e.target.files[0])
+                                    }/>
                                     </div>
                                     <div className="buttons">
-                                    <button className="button button-primary">Default Prediction</button>
+                                    <button className="button button-primary" onClick={handleMonteCarloDefaultButtonClick}>Default Prediction</button>
                                     <button className="button button-secondary">Predict Your CSV</button>
                                 </div>
                                 </div>
@@ -154,23 +223,28 @@ const App = () => {
                                     <h2 className="content__title">Run the model to predict your maturities on your own CSV file,
                                                 or just use one of our own default bond yield files.</h2>
                                     <div className='content__tab2'>
-                                        <label for="file-upload" class="content__file--upload">
+                                        <label for="nn-file-upload" class="content__file--upload">
                                             {file ? file.name : 'Upload File'}
                                         </label>
                                     </div> 
+                                    <input name="file" id="nn-file-upload" accept="text/csv" type="file" onChange={
+                                        (e) => processFile(e.target.files[0])
+                                    }/>
                                     <div className="buttons">
                                     <button className="button button-primary" onClick={handleNNDefaultButtonClick}>Default Prediction</button>
-                                    <button className="button button-secondary">Predict Your CSV</button>
+                                    <button className="button button-secondary" onClick={() => handleNNCSVButtonClick(filename)}>Predict Your CSV</button>
                                 </div>
                                 </div>
                             )
-                               
                         )
                     }                                
-                    
-                    <input id="file-upload" accept="text/csv" type="file" onChange={
-                        (e) => setFile(e.target.files[0])
-                    }/>
+                </div>
+                <br></br>
+                <p>Selected value: {selectedYear}</p>
+                <p>Selected value: {selectedMaturity}</p>
+                <div>
+                    <p>The Api response: {apiResponse}</p>
+                    <p>The uploaded file: {filename}</p>
                 </div>
             </div>
             <Circles />

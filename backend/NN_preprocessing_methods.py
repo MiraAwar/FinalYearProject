@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 
 def preprocess_csv(csv_file_name):
@@ -18,4 +19,7 @@ def preprocess_csv(csv_file_name):
     return (model_input, scaler)
     
 def scale_input(nd_array, scaler):
-    return scaler.inverse_transform(nd_array)
+    return (scaler.inverse_transform(nd_array)).tolist()
+
+def fix_list(list):
+    return np.concatenate(list).tolist()
