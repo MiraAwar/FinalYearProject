@@ -33,8 +33,8 @@ def NSS_residuals(beta, t, y):
 
 def Calibrate(maturity_bound, data_year = 2021, csv = None):
     if(csv == None):
-        csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'
-    data = pd.read_csv(csv, header=0, index_col=0)
+        csv = 'daily-treasury-rates-'+str(data_year)
+    data = pd.read_csv('data/'+csv+'.csv' , header=0, index_col=0)
     new_maturities = np.arange(1, maturity_bound)
     maturities = data.columns.values
     num_maturities = len(maturities)
@@ -101,3 +101,7 @@ def Predict(prediction_year, prediction_maturity, years_available, csv = None):
         betas[i] = res.x
         yields_pred.append(NSS_curve(prediction_year, betas[i]))
     return (dates, yields_pred)
+
+
+
+
