@@ -1,6 +1,7 @@
 import io
 import csv
 import pickle
+from flask_cors import CORS
 from keras.models import load_model 
 import matplotlib.pyplot as plt
 from flask import Flask, request, send_file
@@ -9,6 +10,7 @@ import MonteCarlo_methods
 import NSSRFR_methods
 
 app = Flask(__name__)
+CORS(app, origins=['http://localhost:3000'])
 
 @app.route("/")
 def hello_world():
