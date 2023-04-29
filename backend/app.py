@@ -75,7 +75,7 @@ def neural_network_default():
 def neural_network(csv_file):
     print("CSV FILE:", csv_file)
     loaded_model = load_model('model.h5')
-    (model_input, scaler) = NN_preprocessing_methods.preprocess_csv("data/" + csv_file)
+    (model_input, scaler) = NN_preprocessing_methods.preprocess_csv(csv_file)
     prediction_array = loaded_model.predict(model_input)
     scaled_output = NN_preprocessing_methods.scale_input(prediction_array, scaler)
     fixed_output = NN_preprocessing_methods.fix_list(scaled_output)
