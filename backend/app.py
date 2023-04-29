@@ -4,14 +4,23 @@ import pickle
 from flask_cors import CORS
 from keras.models import load_model 
 import matplotlib.pyplot as plt
-from flask import Flask, request, send_file, jsonify
+from flask import Flask, request, send_file, jsonify, make_response
 import NN_preprocessing_methods
 import MonteCarlo_methods
 import NSSRFR_methods
 import json
 
 app = Flask(__name__)
-CORS(app, origins=['http://localhost:3000'])
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+
+def add_cors_headers(func):
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST'
+        return response
+    return wrapper
 
 @app.route("/")
 def hello_world():
@@ -43,9 +52,11 @@ def process_csv():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     file = request.files['file']
+    print(file)
     if file:
         # Specify the desired location to save the uploaded file
-        file.save('/data/' + file.filename)
+        file.save(file.filename)
+
         # Return a response indicating the success or failure of the upload
         return {'message': 'File uploaded successfully'}
     else:
@@ -62,6 +73,7 @@ def neural_network_default():
 
 @app.route("/neural_network/<string:csv_file>", methods=["GET"])
 def neural_network(csv_file):
+    print("CSV FILE:", csv_file)
     loaded_model = load_model('model.h5')
     (model_input, scaler) = NN_preprocessing_methods.preprocess_csv("data/" + csv_file)
     prediction_array = loaded_model.predict(model_input)
@@ -71,7 +83,12 @@ def neural_network(csv_file):
 
 @app.route("/monte_carlo/<string:csv_file>", methods=["GET"])
 def monte_carlo(csv_file):
-    return MonteCarlo_methods.monte_carlo_yield_estimation(csv_file).to_excel("output.xlsx")
+    print("CSV FILE: ", csv_file)
+    file_path = "output.xlsx"
+    print("IT'S WORKING !!!!!!!!!!!!!!!!!!!!!")
+    MonteCarlo_methods.monte_carlo_yield_estimation(csv_file).to_excel(file_path)
+    print("It passed this?")
+    return send_file(file_path, as_attachment=True)
 
 # @app.route("/monte_carlo_default", methods=["GET"])
 # def monte_carlo_default():

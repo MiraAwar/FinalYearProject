@@ -66,6 +66,7 @@ const App = () => {
 
       const handleNNCSVButtonClick = (nn_csv_file_name) => {
         // Call the API or perform any asynchronous operation here
+        console.log(nn_csv_file_name);
         fetch("http://localhost:5000//neural_network//"+nn_csv_file_name)
             .then(response => {
                 if (response.ok) {
@@ -108,6 +109,29 @@ const App = () => {
         });
       }
 
+      const handleMonteCarloCSVButtonClick = (monte_carlo_csv_file_name) => {
+        // Call the API or perform any asynchronous operation here
+        console.log(monte_carlo_csv_file_name);
+        fetch("http://localhost:5000//monte_carlo//"+monte_carlo_csv_file_name)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();  // Parse the response as JSON
+                } else {
+                    throw new Error('Error: ' + response.status);
+                }
+            })
+          .then(data => {
+            // Update the state with the API response
+            setApiResponse(data);
+            console.log("the API finished and returned");
+            console.log(data);
+          })
+          .catch(error => {
+            // Handle any errors here
+            console.error(error);
+          });
+      }
+
     function processFile(file) {
         setFile(file);
         setFilename(file.name);
@@ -115,25 +139,21 @@ const App = () => {
     }
 
     function uploadFile(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const fileContents = e.target.result;
-            const formData = new FormData();
-            formData.append('file', fileContents);
-            fetch("http://localhost:5000//upload", {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Handle the response from the backend server here
-            })
-            .catch(error => {
-                // Handle any errors here
-            });
-        };
-        reader.readAsText(file);
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch("http://localhost:5000/upload", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the backend server here
+        })
+        .catch(error => {
+            // Handle any errors here
+        });
     }
+    
 
     function changeTab(num) {
         setTab(num);
@@ -215,7 +235,7 @@ const App = () => {
                                     </div>
                                     <div className="buttons">
                                     <button className="button button-primary" onClick={handleMonteCarloDefaultButtonClick}>Default Prediction</button>
-                                    <button className="button button-secondary">Predict Your CSV</button>
+                                    <button className="button button-secondary" onClick={ () => handleMonteCarloCSVButtonClick(filename)}>Predict Your CSV</button>
                                 </div>
                                 </div>
                             ) : (
