@@ -32,5 +32,5 @@ def impute_missing_data(csv_file_name):
     data.drop('Date', axis=1, inplace=True)
     imputer = KNNImputer(n_neighbors=10)
     imputed_data = imputer.fit_transform(data)
-    data = pd.DataFrame(imputed_data, columns=data.columns)
-    data.to_csv("imputed_" + csv_file_name, index=False)
+    return pd.DataFrame(imputed_data, columns=data.columns)
+    # data.to_csv("imputed_" + csv_file_name, index=False)
