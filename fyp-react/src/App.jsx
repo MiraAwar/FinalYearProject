@@ -7,82 +7,71 @@ const App = () => {
     const [tab, setTab] = useState(1);
     const [file, setFile] = useState(null)
     const [filename, setFilename] = useState('')
+    const [fileToDelete, setFileToDelete] = useState('')
     const [selectedYear, selectedYearValue] = useState('2014');
     const handleYearSelectChange = (event) => {
-        // Update the state with the selected value
         selectedYearValue(event.target.value);
     }
     
     const [selectedMaturity, selectedMaturityValue] = useState('1');
     const handleMaturitySelectChange = (event) => {
-        // Update the state with the selected value
         selectedMaturityValue(event.target.value);
     }
     
     const [apiResponse, setApiResponse] = useState('');
     const handleCalibrateButtonClick = () => {
-        // Call the API or perform any asynchronous operation here
         fetch("http://localhost:5000//nss_calibrate//"+selectedYear+"//"+selectedMaturity)
             .then(response => {
                 if (response.ok) {
-                    return console.log(response);  // Parse the response as JSON
+                    return console.log(response);
                 } else {
                     throw new Error('Error: ' + response.status);
                 }
             })
           .then(data => {
-            // Update the state with the API response
             setApiResponse(data);
             console.log("the API finished and returned");
             console.log(data);
           })
           .catch(error => {
-            // Handle any errors here
             console.error(error);
           });
       }
 
       const handleNNDefaultButtonClick = () => {
-        // Call the API or perform any asynchronous operation here
         fetch("http://localhost:5000//neural_network_default")
             .then(response => {
                 if (response.ok) {
-                    return response.json();  // Parse the response as JSON
+                    return response.json();
                 } else {
                     throw new Error('Error: ' + response.status);
                 }
             })
           .then(data => {
-            // Update the state with the API response
             setApiResponse(data);
             console.log("the API finished and returned");
             console.log(data);
           })
           .catch(error => {
-            // Handle any errors here
             console.error(error);
           });
       }
 
       const handleNNCSVButtonClick = (nn_csv_file_name) => {
-        // Call the API or perform any asynchronous operation here
-        console.log(nn_csv_file_name);
         fetch("http://localhost:5000//neural_network//"+nn_csv_file_name)
             .then(response => {
                 if (response.ok) {
-                    return response.json();  // Parse the response as JSON
+                    return response.json();
                 } else {
                     throw new Error('Error: ' + response.status);
                 }
             })
           .then(data => {
-            // Update the state with the API response
             setApiResponse(data);
             console.log("the API finished and returned");
             console.log(data);
           })
           .catch(error => {
-            // Handle any errors here
             console.error(error);
           });
       }
@@ -110,48 +99,76 @@ const App = () => {
       }
 
       const handleMonteCarloCSVButtonClick = (monte_carlo_csv_file_name) => {
-        // Call the API or perform any asynchronous operation here
-        console.log(monte_carlo_csv_file_name);
         fetch("http://localhost:5000//monte_carlo//"+monte_carlo_csv_file_name)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('Error: ' + response.status);
+            }
+        })
+        .then(data => {
+            const url = window.URL.createObjectURL(new Blob([data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'output.xlsx');
+            document.body.appendChild(link);
+            link.click();
+        })
+        .catch(error => {
+            console.error(error);
+        });
+      }
+
+      const handleMissingDataButtonClick = (csv_file_name) => {
+        fetch("http://localhost:5000//impute_missing_data//"+csv_file_name)
             .then(response => {
                 if (response.ok) {
-                    return response.json();  // Parse the response as JSON
+                    return response.json();
                 } else {
                     throw new Error('Error: ' + response.status);
                 }
             })
           .then(data => {
-            // Update the state with the API response
-            setApiResponse(data);
-            console.log("the API finished and returned");
-            console.log(data);
+            const url = window.URL.createObjectURL(new Blob([data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', csv_file_name);
+            document.body.appendChild(link);
+            link.click();
           })
           .catch(error => {
-            // Handle any errors here
             console.error(error);
           });
       }
 
     function processFile(file) {
+        if (fileToDelete !== '') {
+            deleteFile(fileToDelete);
+        }
         setFile(file);
         setFilename(file.name);
-        uploadFile(file)
+        uploadFile(file);
+        setFileToDelete(file.name);
     }
 
     function uploadFile(file) {
         const formData = new FormData();
         formData.append('file', file);
-        fetch("http://localhost:5000/upload", {
+        fetch("http://localhost:5000//upload_file", {
             method: 'POST',
             body: formData
         })
         .then(response => response.json())
-        .then(data => {
-            // Handle the response from the backend server here
+    }
+
+    function deleteFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        fetch("http://localhost:5000//delete_file//"+fileToDelete, {
+            method: 'DELETE'
         })
-        .catch(error => {
-            // Handle any errors here
-        });
+            .then(response => response.json())
     }
     
 
@@ -167,6 +184,16 @@ const App = () => {
     return (
         <div id="app">
             <div className="app__container">
+                <div>
+                    <h3 className='missing-data-label'>Does your file contain missing data? Upload, and click the button to remove the missing data.</h3>
+                    <label for="missing-data-file-upload" class="missing-data__file--upload">
+                        {file ? file.name : 'Upload File'}
+                    </label>
+                    <input name="file" id="missing-data-file-upload" accept="text/csv" type="file" onChange={
+                        (e) => processFile(e.target.files[0])
+                    }/>
+                    <button className="button button-side" onClick={ () => handleMissingDataButtonClick(filename)}>Compute Missing Data</button>
+                </div>
                 <h1 className="app__title">Bond Yield Processor</h1>
                 <div className="tabs">
                     <h2 className="tab active" onClick={
@@ -180,7 +207,6 @@ const App = () => {
                     }>Neural-Network Model</h2>
                 </div>
                 <div className="content">
-                    
                     {
                         tab === 1 ? (
                             <div>
@@ -262,10 +288,9 @@ const App = () => {
                 <br></br>
                 <p>Selected value: {selectedYear}</p>
                 <p>Selected value: {selectedMaturity}</p>
-                <div>
-                    <p>The Api response: {apiResponse}</p>
-                    <p>The uploaded file: {filename}</p>
-                </div>
+                <p>The Api response: {apiResponse}</p>
+                <p>The uploaded file: {filename}</p>
+                <p>The fileToDelete file: {fileToDelete}</p>
             </div>
             <Circles />
         </div>
