@@ -143,9 +143,9 @@ const App = () => {
       }
 
     function processFile(file) {
-        if (fileToDelete !== '') {
-            deleteFile(fileToDelete);
-        }
+        // if (fileToDelete !== '') {
+        //     deleteFile(fileToDelete);
+        // }
         setFile(file);
         setFilename(file.name);
         uploadFile(file);

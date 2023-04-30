@@ -44,7 +44,7 @@ def delete_file(filename):
 @app.route("/impute_missing_data/<string:csv_file_name>", methods=["GET"])
 def impute_missing_data(csv_file_name):
     file_path = "imputed_" + csv_file_name
-    NN_preprocessing_methods.impute_missing_data(csv_file_name).to_csv(file_path)
+    NN_preprocessing_methods.impute_missing_data(csv_file_name)
     return send_file(file_path, as_attachment=True)
 
 @app.route("/neural_network_default", methods=["GET"])

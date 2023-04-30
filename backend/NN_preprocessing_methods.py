@@ -28,9 +28,15 @@ def fix_list(list):
 def impute_missing_data(csv_file_name):
     data = pd.read_csv(csv_file_name)
     date_col = data['Date']
-    print("date:", date_col)
     data.drop('Date', axis=1, inplace=True)
-    imputer = KNNImputer(n_neighbors=10)
+    imputer = KNNImputer(n_neighbors=5)
     imputed_data = imputer.fit_transform(data)
-    return pd.DataFrame(imputed_data, columns=data.columns)
-    # data.to_csv("imputed_" + csv_file_name, index=False)
+
+    num_cols = imputed_data.shape[0] - date_col.shape[0]
+    for i in range(num_cols):
+        col_name = 'col_' + str(i+1)
+        date_col[col_name] = np.nan
+
+    data = pd.DataFrame(imputed_data, columns=data.columns)
+    result = pd.concat([date_col, data], axis=1)
+    return result.to_csv("imputed_" + csv_file_name, index=False)

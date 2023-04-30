@@ -108,6 +108,7 @@
 
   .missing-data-label{
     position: absolute;
+    color: white;
     top: 300px;
     right: 10px;
     width: 250px;
