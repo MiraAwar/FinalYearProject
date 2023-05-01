@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.api import VAR
 
 def parse_maturity(maturities, maturity_column_name):
@@ -23,9 +23,6 @@ def parse_maturity(maturities, maturity_column_name):
         maturities[i] = val
 
 # NSS model functions
-def B(t, beta):
-    return ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[0] + ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[1] * (t / beta[2] + np.exp(-t / beta[2]) - 1) + ((1 - np.exp(-t / beta[3])) / (t / beta[3])) * beta[1] * (t / beta[3] + np.exp(-t / beta[3]) - 1)
-
 def NSS_curve(t, beta):
     alpha1 = (1-np.exp(-t/beta[4])) / (t/beta[4])
     alpha2 = alpha1 - np.exp(-t/beta[5])
@@ -36,7 +33,7 @@ def NSS_residuals(beta, t, y):
     return np.sum((NSS_curve(t, beta) - y)**2)
 
 currency_from = 'US'
-currency_to = 'IN'
+currency_to = 'CA'
 dataset = 'DEX'+currency_to+currency_from
 
 # Load exchange rate data
@@ -117,7 +114,7 @@ else:
     
     if(maturities[-1] >= prediction_year - year):
         post_maturity = min(n for n in maturities if n >= prediction_year - year)
-        post_maturity_actual = np.array(bond_data[maturity_column_name[post_maturity]])
+        post_maturity_actual = np.array(bond_data_yields[maturity_column_name[post_maturity]])
     
     bond_data_yields = bond_data_yields.transpose()
         
@@ -170,7 +167,12 @@ else:
     # Convert the forecast results into a DataFrame
     forecast = pd.DataFrame(forecast, index=test_data.index, columns=combined_data.columns)
     print(forecast)
-    print(mean_squared_error(forecast[dataset],test_data[dataset]))
+    mse = mean_squared_error(test_data[dataset], forecast[dataset])
+    mape = np.mean(np.abs((test_data[dataset] - forecast[dataset]) / test_data[dataset])) * 100
+    mae = mean_absolute_error(test_data[dataset], forecast[dataset])
+    print('MSE', mse)
+    print('MAE', mae)
+    print('MAPE', mape)
     
     # Use the fitted model to make predictions for future dates
     future_steps = (prediction_year - year) * 12 + prediction_date.month # Number of steps to forecast
@@ -179,23 +181,4 @@ else:
     # Convert the forecast results into a DataFrame
     future_forecast = pd.DataFrame(future_forecast, columns=combined_data.columns)
     # Values under DEX____ represent future_steps months into the future
-    print(forecast)    
-'''
-df = pd.read_csv('exchange_rates.csv')
-
-# Convert the 'date' column to a pandas datetime object
-df['date'] = pd.to_datetime(df['date'])
-
-# User-specified date
-user_date = pd.to_datetime('2022-01-01')
-
-# Find the closest date in the dataset to the user-specified date
-closest_date = df['date'].iloc[(df['date'] - user_date).abs().argsort()[:1]].values[0]
-
-# Retrieve the exchange rate value for the closest date
-exchange_rate = df.loc[df['date'] == closest_date, 'exchange_rate'].values[0]
-
-# Print the results
-print(f"The closest date to {user_date} is {closest_date}, with an exchange rate of {exchange_rate}")
-
-'''
+    print(future_forecast)  

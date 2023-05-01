@@ -22,10 +22,6 @@ def parse_maturity(maturities, maturity_column_name):
         maturity_column_name[val] = i
         maturities[i] = val
 
-# NSS model functions
-def B(t, beta):
-    return ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[0] + ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[1] * (t / beta[2] + np.exp(-t / beta[2]) - 1) + ((1 - np.exp(-t / beta[3])) / (t / beta[3])) * beta[1] * (t / beta[3] + np.exp(-t / beta[3]) - 1)
-
 def NSS_curve(t, beta):
     alpha1 = (1-np.exp(-t/beta[4])) / (t/beta[4])
     alpha2 = alpha1 - np.exp(-t/beta[5])
@@ -111,8 +107,6 @@ def PredictExchange(prediction_date, currency_from = None, currency_to = None, c
         forecast_input = train_data.values[-lag_order:]
         forecast = results.forecast(y=forecast_input, steps=months)
         forecast = pd.DataFrame(forecast, index=test_data.index, columns=combined_data.columns)
-        print(forecast)
-        print(mean_squared_error(forecast[dataset],test_data[dataset]))
         future_steps = (prediction_year - year) * 12 + prediction_date.month # Number of steps to forecast
         future_forecast = results.forecast(y=train_data.values[-lag_order:], steps=future_steps)
         future_forecast = pd.DataFrame(future_forecast, columns=combined_data.columns)

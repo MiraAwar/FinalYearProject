@@ -19,9 +19,6 @@ def parse_maturity(maturities):
             else:
                 raise TypeError('Unknown measure of time')   
 
-def B(t, beta):
-    return ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[0] + ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[1] * (t / beta[2] + np.exp(-t / beta[2]) - 1) + ((1 - np.exp(-t / beta[3])) / (t / beta[3])) * beta[1] * (t / beta[3] + np.exp(-t / beta[3]) - 1)
-
 def NSS_curve(t, beta):
     alpha1 = (1-np.exp(-t/beta[4])) / (t/beta[4])
     alpha2 = alpha1 - np.exp(-t/beta[5])
@@ -72,7 +69,6 @@ def Calibrate(maturity_bound, data_year = 2021, csv = None):
     curve = []
     for j in range(len(new_maturities)):
         maturity = new_maturities[j]
-        b = B(maturity, final_pred) 
         curve.append(NSS_curve(maturity, final_pred))
     return (new_maturities, curve)
 
@@ -101,6 +97,49 @@ def Predict(prediction_year, prediction_maturity, years_available, csv = None):
         betas[i] = res.x
         yields_pred.append(NSS_curve(prediction_year, betas[i]))
     return (dates, yields_pred)
+
+def Predict_RFR(prediction_year, prediction_maturity, years_available, csv = None):
+    if(csv == None):
+        data_year = max(n for n in years_available if n <= prediction_year)
+        csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'
+    data = pd.read_csv(csv, header=0, index_col=0)
+    maturities = data.columns.values
+    num_maturities = len(maturities)
+    parse_maturity(maturities)
+    maturities = maturities.astype(float)
+    data = data.transpose()
+    dates = data.columns.values
+    num_dates = len(dates)
+    data = data.transpose()
+    data = data.fillna(method='ffill')  
+    yields = data.values
+    betas = np.zeros((num_dates, 6))
+    beta_bounds = [(0, 5), (-5, 5), (-5, 5), (-1, 1), (0, 1), (0, 1)]
+    yields_pred = []
+    for i in range(num_dates):
+        betas[i] = np.empty(6)
+        betas[i].fill(0.5)
+        res = minimize(NSS_residuals, betas[i], args=(maturities, yields[i]), method='L-BFGS-B', bounds=beta_bounds)
+        betas[i] = res.x
+    medians = np.median(betas, axis=0)
+    stds = np.std(betas, axis=0)
+    ranges = [(medians[i] - stds[i], medians[i] + stds[i]) for i in range(betas.shape[1])]
+    clean_betas = betas[~np.any(np.logical_or(betas < np.array(ranges)[:, 0], betas > np.array(ranges)[:, 1]), axis=1)]
+    weights = np.linspace(0.1, 1.0, num=clean_betas.shape[0])
+    shuffle_idx = np.random.permutation(clean_betas.shape[0])
+    clean_betas = clean_betas[shuffle_idx]
+    weights = weights[shuffle_idx]
+    split_idx = int(0.8 * clean_betas.shape[0])
+    train_data, train_weights = clean_betas[:split_idx], weights[:split_idx]
+    test_data, test_weights = clean_betas[split_idx:], weights[split_idx:]
+    rf = RandomForestRegressor(n_estimators=2000, random_state=42)
+    rf.fit(train_data, train_weights)
+    pred_weights = rf.predict(test_data)
+    pred_weights /= np.sum(pred_weights)
+    final_pred = np.average(test_data, axis=0, weights=pred_weights)
+    curve = []
+    predicted_value = NSS_curve(prediction_maturity, final_pred)
+    return predicted_value
 
 
 

@@ -22,9 +22,6 @@ def parse_maturity(maturities):
                 raise TypeError('Unknown measure of time')   
 
 # NSS model functions
-def B(t, beta):
-    return ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[0] + ((1 - np.exp(-t / beta[2])) / (t / beta[2])) * beta[1] * (t / beta[2] + np.exp(-t / beta[2]) - 1) + ((1 - np.exp(-t / beta[3])) / (t / beta[3])) * beta[1] * (t / beta[3] + np.exp(-t / beta[3]) - 1)
-
 def NSS_curve(t, beta):
     alpha1 = (1-np.exp(-t/beta[4])) / (t/beta[4])
     alpha2 = alpha1 - np.exp(-t/beta[5])
@@ -34,7 +31,7 @@ def NSS_curve(t, beta):
 def NSS_residuals(beta, t, y):
     return np.sum((NSS_curve(t, beta) - y)**2)
 
-year = 2019
+year = 2022
 
 # Load bond yield data
 data = pd.read_csv('data/daily-treasury-rates-'+str(year)+'.csv', header=0, index_col=0)
@@ -44,10 +41,12 @@ maturities = data.columns.values
 num_maturities = len(maturities)
 print("Maturities:", maturities)
 
+data = data.transpose()
 # Retrieve all dates
 dates = data.columns.values
 num_dates = len(dates)
 #print("Dates:",dates)
+data = data.transpose()
  
 parse_maturity(maturities)
 maturity_test = maturities[-1]
@@ -131,7 +130,6 @@ final_pred = np.average(test_data, axis=0, weights=pred_weights)
 curve = []
 for j in range(len(new_maturities)):
     maturity = new_maturities[j]
-    b = B(maturity, final_pred) 
     curve.append(NSS_curve(maturity, final_pred))
 #print(curve)
 plt.figure(j)
