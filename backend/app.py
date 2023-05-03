@@ -4,7 +4,9 @@ from keras.models import load_model
 from flask import Flask, request, send_file, jsonify, make_response
 import NN_preprocessing_methods
 import MonteCarlo_methods
-import NSSRFR_methods
+import NSSBFGS_methods
+import RFR_methods
+import NSSVARDEX_methods
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -32,14 +34,14 @@ def upload_file():
     else:
         return {'error': 'File upload failed'}
     
-@app.route('/delete_file/<string:filename>', methods=['DELETE'])
-def delete_file(filename):
-    file_path = os.path.join(app.root_path, filename)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        return jsonify({'message': 'File successfully deleted.'}), 200
-    else:
-        return jsonify({'message': 'File not found.'}), 404
+# @app.route('/delete_file/<string:filename>', methods=['DELETE'])
+# def delete_file(filename):
+#     file_path = os.path.join(app.root_path, filename)
+#     if os.path.exists(file_path):
+#         os.remove(file_path)
+#         return jsonify({'message': 'File successfully deleted.'}), 200
+#     else:
+#         return jsonify({'message': 'File not found.'}), 404
     
 @app.route("/impute_missing_data/<string:csv_file_name>", methods=["GET"])
 def impute_missing_data(csv_file_name):
@@ -80,11 +82,23 @@ def monte_carlo_default():
 
 @app.route("/nss_calibrate/<int:year>/<int:maturity_bound>", methods=["GET"])
 def nss_calibrate(year, maturity_bound):
-    return str(NSSRFR_methods.Calibrate(year, maturity_bound))
+    return str(NSSBFGS_methods.Calibrate(maturity_bound, year))
 
 @app.route("/nss_predict/<int:prediction_year>/<int:prediction_maturity>/<int:years_available>", methods=["GET"])
 def nss_predict(prediction_year, prediction_maturity, years_available):
-    return str(NSSRFR_methods.Predict(prediction_year, prediction_maturity, years_available))
+    return str(NSSBFGS_methods.Predict(prediction_year, prediction_maturity, years_available))
+
+@app.route("/rfr_predict/<int:prediction_year>/<int:prediction_maturity>/<int:years_available>", methods=["GET"])
+def rfr_predict(prediction_year, prediction_maturity, years_available):
+    return str(RFR_methods.Predict_RFR(prediction_year, prediction_maturity, years_available))
+
+@app.route("/exchange_predict/<int:prediction_year>", methods=["GET"])
+def exchange_predict(prediction_year):
+    return str(NSSVARDEX_methods.PredictExchange(prediction_year))
+
+@app.route("/exchange_predict/<int:prediction_year>", methods=["GET"])
+def exchange_predict(prediction_year):
+    return str(NSSVARDEX_methods.PredictExchange(prediction_year))
     
 if __name__ == "__main__":
     app.run(debug=True)
