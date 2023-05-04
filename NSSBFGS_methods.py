@@ -32,6 +32,8 @@ def Calibrate(maturity_bound, data_year = 2021, csv = None):
     if(csv == None):
         csv = 'daily-treasury-rates-'+str(data_year)
     data = pd.read_csv('data/'+csv+'.csv' , header=0, index_col=0)
+    if )maurity_bound < 1):
+        return []
     new_maturities = np.arange(1, maturity_bound)
     maturities = data.columns.values
     num_maturities = len(maturities)
@@ -70,9 +72,9 @@ def Calibrate(maturity_bound, data_year = 2021, csv = None):
     for j in range(len(new_maturities)):
         maturity = new_maturities[j]
         curve.append(NSS_curve(maturity, final_pred))
-    return (new_maturities, curve)
+    return curve
 
-def Predict(prediction_year, prediction_maturity, years_available, csv = None):
+def PredictArray(prediction_year, prediction_maturity, years_available, csv = None):
     if(csv == None):
         data_year = max(n for n in years_available if n <= prediction_year)
         csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'
@@ -96,9 +98,9 @@ def Predict(prediction_year, prediction_maturity, years_available, csv = None):
         res = minimize(NSS_residuals, betas[i], args=(maturities, yields[i]), method='L-BFGS-B', bounds=beta_bounds)
         betas[i] = res.x
         yields_pred.append(NSS_curve(prediction_year, betas[i]))
-    return (dates, yields_pred)
+    return yields_pred
 
-def Predict_RFR(prediction_year, prediction_maturity, years_available, csv = None):
+def PredictValue(prediction_year, prediction_maturity, years_available, csv = None):
     if(csv == None):
         data_year = max(n for n in years_available if n <= prediction_year)
         csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'

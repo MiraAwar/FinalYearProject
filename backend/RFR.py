@@ -23,7 +23,6 @@ def parse_maturity(maturities, maturity_column_name):
         maturities[i] = val 
 
 for year in range (2015, 2023):
-    print(year)
     
     # Load bond yield data
     bond_data = pd.read_csv('data/daily-treasury-rates-'+str(year)+'.csv', header=0, index_col=0)
@@ -31,8 +30,12 @@ for year in range (2015, 2023):
     bond_data.columns = [col.strip() for col in bond_data.columns]
     # Replace NaN with the previous value using pandas fillna() function
     bond_data = bond_data.fillna(method='ffill')  
+    if('2 Mo' not in bond_data.columns):
+        continue
+    print(year)
+    bond_data = bond_data.drop(columns=['2 Mo'])
     #print(bond_data)
-    bond_data = bond_data.iloc[::-1]
+    #bond_data = bond_data.iloc[::-1]
 
     # Get raw bond yield data values
     bond_data_yields = bond_data.values
@@ -59,26 +62,46 @@ for year in range (2015, 2023):
     parse_maturity(maturities, maturity_column_name)
     maturities = maturities.astype(float)
     
-    future_maturity_yield = 30
-    
     # Define the input and output data
-    X = bond_data_yields[:,:-1]
-    y = bond_data_yields[:,-1]
-    
-    # Split the data into training and testing sets
-    train_size = int(len(bond_data) * 0.8)
-    X_train, X_test = X[:train_size], X[train_size:]
-    y_train, y_test = y[:train_size], y[train_size:]
-    
+    X = bond_data_yields[:,0:2]
+    y = bond_data_yields[:,2]
+    y_test = bond_data_yields[:,3]
     # Train a Random Forest Regressor
     rf = RandomForestRegressor(n_estimators=100, random_state=42)
-    rf.fit(X_train, y_train)
-    future_maturity_yield = rf.predict(X_test)
-    
-    print("Predicted yield for future maturity:", future_maturity_yield[0])
+    rf.fit(X, y)
+    print(1)
+    m23 = rf.predict(bond_data_yields[:,1:3])
+    print(1)
+    temp = bond_data_yields[:,3]
+    print(1)
+    temp = np.vstack((temp, m23))
+    temp = temp.transpose()
+    print(1)
+    m34 = rf.predict(temp)
+    print(1)
+    temp = np.vstack((m23, m34))
+    temp = temp.transpose()
+    print(1)
+    m45 = rf.predict(temp)
+    print(1)
+    temp = np.vstack((m34, m45))
+    temp = temp.transpose()
+    print(1)
+    future_maturity_yield = rf.predict(temp)
+    print(future_maturity_yield)
+
+    #print("Predicted yield for future maturity:", future_maturity_yield[0])
     mse = mean_squared_error(y_test, future_maturity_yield)
     mape = np.mean(np.abs((np.array(y_test) - np.array(future_maturity_yield)) / np.array(y_test))) * 100
     mae = mean_absolute_error(y_test, future_maturity_yield)
     print('MSE', mse)
     print('MAE', mae)
     print('MAPE', mape)  
+    
+'''
+    # Split the data into training and testing sets
+    train_size = int(len(bond_data) * 0.8)
+    X_train, X_test = X[:train_size], X[train_size:]
+    y_train, y_test = y[:train_size], y[train_size:]
+'''
+    

@@ -22,13 +22,13 @@ def parse_maturity(maturities, maturity_column_name):
         maturity_column_name[val] = s
         maturities[i] = val 
         
-def Predict_RFR(prediction_year, prediction_maturity, years_available, csv = None):  
+def Predict_RFR(prediction_year, prediction_maturity, years_available = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022], csv = None):  
     if(csv == None):
         csv = 'daily-treasury-rates-'+str(prediction_year)
     bond_data = pd.read_csv('data/'+csv+'.csv', header=0, index_col=0)
     bond_data.columns = [col.strip() for col in bond_data.columns]
     bond_data = bond_data.fillna(method='ffill')  
-    bond_data = bond_data.iloc[::-1]
+    #bond_data = bond_data.iloc[::-1]
     bond_data_yields = bond_data.values
     maturities = bond_data.columns.values
     num_maturities = len(maturities)
@@ -45,3 +45,4 @@ def Predict_RFR(prediction_year, prediction_maturity, years_available, csv = Non
     rf.fit(X, y)
     future_maturity_yield = rf.predict(X)
     return future_maturity_yield
+
