@@ -30,9 +30,9 @@ def NSS_residuals(beta, t, y):
 
 def Calibrate(maturity_bound, data_year = 2021, csv = None):
     if(csv == None):
-        csv = 'daily-treasury-rates-'+str(data_year)
-    data = pd.read_csv('data/'+csv+'.csv' , header=0, index_col=0)
-    if )maurity_bound < 1):
+        csv = 'daily-treasury-rates-'+str(data_year)+'.csv'
+    data = pd.read_csv('data/'+csv , header=0, index_col=0)
+    if maturity_bound < 1:
         return []
     new_maturities = np.arange(1, maturity_bound)
     maturities = data.columns.values
@@ -74,7 +74,7 @@ def Calibrate(maturity_bound, data_year = 2021, csv = None):
         curve.append(NSS_curve(maturity, final_pred))
     return curve
 
-def PredictArray(prediction_year, prediction_maturity, years_available, csv = None):
+def PredictArray(prediction_maturity, prediction_year = 2021, years_available = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022], csv = None):
     if(csv == None):
         data_year = max(n for n in years_available if n <= prediction_year)
         csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'
@@ -97,10 +97,10 @@ def PredictArray(prediction_year, prediction_maturity, years_available, csv = No
         betas[i].fill(0.5)
         res = minimize(NSS_residuals, betas[i], args=(maturities, yields[i]), method='L-BFGS-B', bounds=beta_bounds)
         betas[i] = res.x
-        yields_pred.append(NSS_curve(prediction_year, betas[i]))
+        yields_pred.append(NSS_curve(prediction_maturity, betas[i]))
     return yields_pred
 
-def PredictValue(prediction_year, prediction_maturity, years_available, csv = None):
+def PredictValue(prediction_maturity, prediction_year = 2021, years_available = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022], csv = None):
     if(csv == None):
         data_year = max(n for n in years_available if n <= prediction_year)
         csv = 'data/daily-treasury-rates-'+str(data_year)+'.csv'

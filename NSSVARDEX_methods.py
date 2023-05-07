@@ -34,7 +34,7 @@ def NSS_residuals(beta, t, y):
 def PredictExchange(prediction_date, currency_from = None, currency_to = None, csv = None):
     year = 2021
     if(csv):
-        dataset = csv
+        dataset = csv[:-4]
     else:
         dataset = 'DEX'+currency_to+currency_from
     exchange_data = pd.read_csv('data/'+dataset+'.csv', parse_dates=['DATE'])

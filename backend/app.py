@@ -7,6 +7,7 @@ import MonteCarlo_methods
 import NSSBFGS_methods
 import RFR_methods
 import NSSVARDEX_methods
+import Stocks_methods
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
@@ -19,6 +20,11 @@ def add_cors_headers(func):
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE'
         return response
     return wrapper
+    
+
+####################################################################################################################################
+# App and Data related APIs
+####################################################################################################################################
 
 @app.route("/")
 def hello_world():
@@ -49,10 +55,14 @@ def impute_missing_data(csv_file_name):
     NN_preprocessing_methods.impute_missing_data(csv_file_name)
     return send_file(file_path, as_attachment=True)
 
+####################################################################################################################################
+# Neural Network related APIs
+####################################################################################################################################
+
 @app.route("/neural_network_default", methods=["GET"])
 def neural_network_default():
     loaded_model = load_model('model.h5')
-    (model_input, scaler) = NN_preprocessing_methods.preprocess_csv("data/daily-treasury-rates-2014-2023.csv")
+    (model_input, scaler) = NN_preprocessing_methods.preprocess_csv("data/daily-treasury-rates-2021.csv")
     prediction_array = loaded_model.predict(model_input)
     scaled_output = NN_preprocessing_methods.scale_input(prediction_array, scaler)
     fixed_output = NN_preprocessing_methods.fix_list(scaled_output)
@@ -68,37 +78,69 @@ def neural_network(csv_file_name):
     fixed_output = NN_preprocessing_methods.fix_list(scaled_output)
     return jsonify(fixed_output)
 
-@app.route("/monte_carlo/<string:csv_file_name>", methods=["GET"])
-def monte_carlo(csv_file_name):
+####################################################################################################################################
+# Monte-Carlo related APIs
+####################################################################################################################################
+
+@app.route("/monte_carlo/<string:csv_file_name>/<int:number_of_days>", methods=["GET"])
+def monte_carlo(csv_file_name, number_of_days):
     file_path = "output.xlsx"
-    MonteCarlo_methods.monte_carlo_yield_estimation(csv_file_name).to_excel(file_path)
+    MonteCarlo_methods.monte_carlo_yield_estimation(csv_file_name, number_of_days).to_excel(file_path)
     return send_file(file_path, as_attachment=True)
 
-@app.route("/monte_carlo_default", methods=["GET"])
-def monte_carlo_default():
+@app.route("/monte_carlo_default/<int:number_of_days>", methods=["GET"])
+def monte_carlo_default(number_of_days):
     file_path = "output.xlsx"
-    MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2014-2023.csv").to_excel(file_path)
+    MonteCarlo_methods.monte_carlo_yield_estimation("data/daily-treasury-rates-2022.csv", number_of_days).to_excel(file_path)
     return send_file(file_path, as_attachment=True)
+
+####################################################################################################################################
+# NSS related APIs
+####################################################################################################################################
 
 @app.route("/nss_calibrate/<int:year>/<int:maturity_bound>", methods=["GET"])
 def nss_calibrate(year, maturity_bound):
-    return str(NSSBFGS_methods.Calibrate(maturity_bound, year))
+    return list(NSSBFGS_methods.Calibrate(maturity_bound=maturity_bound+1, data_year=year))
 
-@app.route("/nss_predict/<int:prediction_year>/<int:prediction_maturity>/<int:years_available>", methods=["GET"])
-def nss_predict(prediction_year, prediction_maturity, years_available):
-    return str(NSSBFGS_methods.Predict(prediction_year, prediction_maturity, years_available))
+@app.route("/nss_predict_value/<int:prediction_year>/<int:prediction_maturity>", methods=["GET"])
+def nss_predict_value(prediction_year, prediction_maturity):
+    return str(NSSBFGS_methods.PredictValue(prediction_year=prediction_year, prediction_maturity=prediction_maturity))
 
-@app.route("/rfr_predict/<int:prediction_year>/<int:prediction_maturity>/<int:years_available>", methods=["GET"])
-def rfr_predict(prediction_year, prediction_maturity, years_available):
-    return str(RFR_methods.Predict_RFR(prediction_year, prediction_maturity, years_available))
+@app.route("/nss_predict_array/<int:prediction_year>/<int:prediction_maturity>", methods=["GET"])
+def nss_predict_array(prediction_year, prediction_maturity):
+    return list(NSSBFGS_methods.PredictArray(prediction_year=prediction_year, prediction_maturity=prediction_maturity))
 
-@app.route("/exchange_predict/<int:prediction_year>", methods=["GET"])
-def exchange_predict(prediction_year):
-    return str(NSSVARDEX_methods.PredictExchange(prediction_year))
+####################################################################################################################################
+# RFR related APIs
+####################################################################################################################################
 
-@app.route("/exchange_predict/<int:prediction_year>", methods=["GET"])
-def exchange_predict(prediction_year):
-    return str(NSSVARDEX_methods.PredictExchange(prediction_year))
+@app.route("/rfr_predict_default/<string:prediction_maturity>", methods=["GET"])
+def rfr_predict_default(prediction_maturity):
+    return list(RFR_methods.Predict_RFR(prediction_maturity=prediction_maturity))
+
+@app.route("/rfr_predict/<string:csv_file>/<string:prediction_maturity>", methods=["GET"])
+def rfr_predict(csv_file, prediction_maturity):
+    return list(RFR_methods.Predict_RFR(prediction_maturity=prediction_maturity, csv=csv_file))
+
+####################################################################################################################################
+# Exchange Rate related APIs
+####################################################################################################################################
+
+@app.route("/exchange_predict_default/<string:prediction_date>/<string:currency_from>/<string:currency_to>", methods=["GET"])
+def exchange_predict_default(prediction_date, currency_from, currency_to):
+    return str(NSSVARDEX_methods.PredictExchange(prediction_date=prediction_date, currency_from=currency_from, currency_to=currency_to))
+
+@app.route("/exchange_predict/<string:prediction_date>/<string:csv_file>", methods=["GET"])
+def exchange_predict(prediction_date, csv_file):
+    return str(NSSVARDEX_methods.PredictExchange(prediction_date=prediction_date, csv=csv_file))
+
+####################################################################################################################################
+# Stock Prices related APIs
+####################################################################################################################################
+
+@app.route("/stock_predict/<string:stock>/<int:predict_days>", methods=["GET"])
+def stock_predict(stock, predict_days):
+    return str(Stocks_methods.predict_stock_closing_price(stock, predict_days))
     
 if __name__ == "__main__":
     app.run(debug=True)

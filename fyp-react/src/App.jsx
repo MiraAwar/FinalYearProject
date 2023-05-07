@@ -77,7 +77,7 @@ const App = () => {
                     <br/>
                     <button className="button button-side" onClick={ () => handleMissingDataButtonClick(filename)}>Compute Missing Data</button>
                 </div>
-                <h1 className="app__title">Bond Yield Processor</h1>
+                <h1 className="app__title">Online Financial Tools</h1>
                 <div className="tabs">
                     <h2 className="tab active" onClick={
                         () => changeTab(1)
